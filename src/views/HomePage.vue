@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-const query = ref('');
-const router = useRouter();
+const query = ref('')
+const router = useRouter()
 
 const search = () => {
   if (query.value.trim()) {
-    router.push({ path: '/search', query: { q: query.value } });
+    router.push({ path: '/search', query: { q: query.value } })
   }
-};
+}
 </script>
 
 <template>
@@ -17,8 +17,7 @@ const search = () => {
     <div class="search-container">
       <input v-model="query" @keyup.enter="search" class="search-bar" placeholder="Search Google or type a URL" />
       <div class="buttons">
-        <button @click="search" class="search-button">Google Search</button>
-        <button class="search-button">I'm Feeling Lucky</button>
+        <button @click="search" class="search-button">Search</button>
       </div>
     </div>
   </div>
