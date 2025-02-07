@@ -7,79 +7,125 @@ export default {
   setup() {
     const route = useRoute()
     const query = route.query.q || ''
-    const results = ref({
-      bm25: [],
-      tfidf: [],
-    })
+    const bm25Results = ref([])
+    const tfidfResults = ref([])
     const executionTime = ref(0)
     const loading = ref(true)
-    const totalBm25Results = ref(0)
-    const totalTfidfResults = ref(0)
+    const totalResults = ref(0)
 
     onMounted(async () => {
       try {
         const response = await axios.get(`http://localhost:5000/search?q=${query}`)
-        results.value.bm25 = response.data.results_bm25
-        results.value.tfidf = response.data.results_tfidf
+        bm25Results.value = response.data.bm25_results
+        tfidfResults.value = response.data.tfidf_results
         executionTime.value = response.data.execution_time
-        totalBm25Results.value = response.data.total_bm25_results
-        totalTfidfResults.value = response.data.total_tfidf_results
+        totalResults.value = response.data.total_results
       } catch (error) {
         console.error('Error fetching results:', error)
       }
       loading.value = false
     })
 
-    return { query, results, executionTime, loading, totalBm25Results, totalTfidfResults }
+    return { query, bm25Results, tfidfResults, executionTime, loading, totalResults }
   },
 }
 </script>
 
 <template>
   <div class="results-page">
-    <h2>Results for "{{ query }}"</h2>
-    <div class="results-container">
-      <div class="results-section">
-        <h3>BM25</h3>
-        <p v-if="loading">Loading...</p>
-        <p v-else>
-          Time: {{ executionTime }}s | Results: {{ totalBm25Results }}
-        </p>
-        <ul>
-          <li v-for="result in results.bm25" :key="result.url">
-            <a :href="result.url" target="_blank">{{ result.title }}</a>
-            <p>{{ result.text }}...</p>
-            <span>Score: {{ result.score }}</span>
-          </li>
-        </ul>
-      </div>
+    <h1>Results for "{{ query }}"</h1>
+    <p v-if="loading">Loading...</p>
+    <div v-else>
+      <p class="result-count">About {{ totalResults }} results ({{ executionTime }} seconds)</p>
 
-      <div class="results-section">
-        <h3>TF-IDF</h3>
-        <p v-if="loading">Loading...</p>
-        <p v-else>
-          Time: {{ executionTime }}s | Results: {{ totalTfidfResults }}
-        </p>
-        <ul>
-          <li v-for="result in results.tfidf" :key="result.url">
-            <a :href="result.url" target="_blank">{{ result.title }}</a>
-            <p>{{ result.text }}...</p>
-            <span>Score: {{ result.score }}</span>
-          </li>
-        </ul>
+      <div class="results-container">
+        <!-- BM25 Results -->
+        <div class="results-section">
+          <h2 style="text-decoration: underline;">BM25 Results</h2>
+          <br>
+          <div class="result" v-for="result in bm25Results" :key="result.url">
+            <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
+            <div class="result-url">{{ result.url }}</div>
+            <div class="result-snippet" v-html="result.highlighted_text"></div>
+            <div class="result-score">BM25 Score: {{ result.score }}</div>
+          </div>
+        </div>
+
+        <!-- TF-IDF Results -->
+        <div class="results-section">
+          <h2 style="text-decoration: underline;">TF-IDF Results</h2>
+          <br>
+          <div class="result" v-for="result in tfidfResults" :key="result.url">
+            <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
+            <div class="result-url">{{ result.url }}</div>
+            <div class="result-snippet" v-html="result.highlighted_text"></div>
+            <div class="result-score">TF-IDF Score: {{ result.score }}</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<style>
+<style scoped>
+.results-page {
+  margin: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.result-count {
+  font-size: 16px;
+  color: #777;
+}
+
 .results-container {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   margin-top: 20px;
 }
 
 .results-section {
-  width: 45%;
+  width: 48%;
+}
+
+.result {
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.result-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1a0dab;
+  text-decoration: none;
+}
+
+.result-title:hover {
+  text-decoration: underline;
+}
+
+.result-url {
+  font-size: 14px;
+  color: #006621;
+  margin-top: 5px;
+  inline-size: 100%;
+  overflow: hidden;
+}
+
+.result-snippet {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #4d5156;
+}
+
+.result-snippet b {
+  font-weight: bold;
+}
+
+.result-score {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #888;
 }
 </style>
