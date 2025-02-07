@@ -5,15 +5,13 @@
     <p v-else>Execution Time: {{ executionTime }}s</p>
     <div class="results-container">
       <div class="results-section">
-        <h3>BM25 Results</h3>
+        <h3>Search Results</h3>
         <ul>
-          <li v-for="result in results.bm25" :key="result._id">{{ result._source.content }}</li>
-        </ul>
-      </div>
-      <div class="results-section">
-        <h3>TF-IDF Results</h3>
-        <ul>
-          <li v-for="result in results.tfidf" :key="result._id">{{ result._source.content }}</li>
+          <li v-for="result in results" :key="result.url">
+            <a :href="result.url" target="_blank">{{ result.title }}</a>
+            <p>{{ result.text }}...</p>
+            <span>Score: {{ result.score }}</span>
+          </li>
         </ul>
       </div>
     </div>
@@ -29,14 +27,14 @@ export default {
   setup() {
     const route = useRoute()
     const query = route.query.q || ''
-    const results = ref({ bm25: [], tfidf: [] })
+    const results = ref([])
     const executionTime = ref(0)
     const loading = ref(true)
 
     onMounted(async () => {
       try {
         const response = await axios.get(`http://localhost:5000/search?q=${query}`)
-        results.value = response.data
+        results.value = response.data.results  // Updated to get all results
         executionTime.value = response.data.execution_time
       } catch (error) {
         console.error('Error fetching results:', error)
