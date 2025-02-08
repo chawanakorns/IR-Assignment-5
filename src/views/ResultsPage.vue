@@ -85,7 +85,6 @@ export default {
 .bold-query {
   font-weight: bold;
   color: #d93025;
-  /* Google-style red for query */
 }
 
 .result-count {
@@ -153,7 +152,6 @@ export default {
 .result-snippet b {
   font-weight: bold;
   color: #d93025;
-  /* Make query terms bold and red */
 }
 
 .result-score {
