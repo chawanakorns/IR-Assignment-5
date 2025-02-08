@@ -1,34 +1,39 @@
-<script lang="ts">
+<script setup lang="ts">
 import axios from 'axios'
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
-export default {
-  setup() {
-    const route = useRoute()
-    const query = route.query.q || ''
-    const bm25Results = ref([])
-    const tfidfResults = ref([])
-    const executionTime = ref(0)
-    const loading = ref(true)
-    const totalResults = ref(0)
+const route = useRoute()
+const query = ref(route.query.q || '')
+const bm25Results = ref([])
+const tfidfResults = ref([])
+const executionTime = ref(0)
+const loading = ref(false)
+const totalResults = ref(0)
 
-    onMounted(async () => {
-      try {
-        const response = await axios.get(`http://localhost:5000/search?q=${query}`)
-        bm25Results.value = response.data.bm25_results
-        tfidfResults.value = response.data.tfidf_results
-        executionTime.value = response.data.execution_time
-        totalResults.value = response.data.total_results
-      } catch (error) {
-        console.error('Error fetching results:', error)
-      }
-      loading.value = false
-    })
+// Function to fetch results from API
+const fetchResults = async () => {
+  if (!query.value) return
+  loading.value = true
 
-    return { query, bm25Results, tfidfResults, executionTime, loading, totalResults }
-  },
+  try {
+    const response = await axios.get(`http://localhost:5000/search?q=${query.value}`)
+    bm25Results.value = response.data.bm25_results
+    tfidfResults.value = response.data.tfidf_results
+    executionTime.value = response.data.execution_time
+    totalResults.value = response.data.total_results
+  } catch (error) {
+    console.error('Error fetching results:', error)
+  }
+
+  loading.value = false
 }
+
+// Watch for changes in the query and refetch results
+watch(() => route.query.q, (newQuery) => {
+  query.value = newQuery || ''
+  fetchResults()
+}, { immediate: true }) // Fetch results when the component loads
 </script>
 
 <template>
@@ -40,26 +45,28 @@ export default {
 
       <div class="results-container">
         <!-- BM25 Results -->
-        <div class="results-section">
-          <h2 style="text-decoration: underline;">BM25 Results</h2>
-          <br>
-          <div class="result" v-for="result in bm25Results" :key="result.url">
-            <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
-            <div class="result-url">{{ result.url }}</div>
-            <div class="result-snippet" v-html="result.highlighted_text"></div>
-            <div class="result-score">BM25 Score: {{ result.score }}</div>
+        <div class="results-box">
+          <h2 style="text-decoration: underline">BM25 Results</h2>
+          <div class="results-scrollable">
+            <div class="result" v-for="result in bm25Results" :key="result.url">
+              <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
+              <div class="result-url">{{ result.url }}</div>
+              <div class="result-snippet" v-html="result.highlighted_text"></div>
+              <div class="result-score">BM25 Score: {{ result.score }}</div>
+            </div>
           </div>
         </div>
 
         <!-- TF-IDF Results -->
-        <div class="results-section">
-          <h2 style="text-decoration: underline;">TF-IDF Results</h2>
-          <br>
-          <div class="result" v-for="result in tfidfResults" :key="result.url">
-            <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
-            <div class="result-url">{{ result.url }}</div>
-            <div class="result-snippet" v-html="result.highlighted_text"></div>
-            <div class="result-score">TF-IDF Score: {{ result.score }}</div>
+        <div class="results-box">
+          <h2 style="text-decoration: underline">TF-IDF Results</h2>
+          <div class="results-scrollable">
+            <div class="result" v-for="result in tfidfResults" :key="result.url">
+              <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
+              <div class="result-url">{{ result.url }}</div>
+              <div class="result-snippet" v-html="result.highlighted_text"></div>
+              <div class="result-score">TF-IDF Score: {{ result.score }}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -82,20 +89,34 @@ export default {
   display: flex;
   justify-content: space-between;
   margin-top: 20px;
+  width: 100%;
 }
 
-.results-section {
+.results-box {
   width: 48%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  background-color: #fff;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.results-scrollable {
+  max-height: 400px;
+  /* Fixed height for scrollable area */
+  overflow-y: auto;
+  padding-right: 10px;
 }
 
 .result {
   border-bottom: 1px solid #ccc;
   padding-bottom: 10px;
   margin-bottom: 20px;
+  text-align: left;
 }
 
 .result-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
   color: #1a0dab;
   text-decoration: none;
@@ -106,16 +127,15 @@ export default {
 }
 
 .result-url {
-  font-size: 14px;
+  font-size: 12px;
   color: #006621;
   margin-top: 5px;
-  inline-size: 100%;
-  overflow: hidden;
+  word-break: break-word;
 }
 
 .result-snippet {
   margin-top: 10px;
-  font-size: 14px;
+  font-size: 12px;
   color: #4d5156;
 }
 
@@ -125,7 +145,7 @@ export default {
 
 .result-score {
   margin-top: 5px;
-  font-size: 12px;
+  font-size: 10px;
   color: #888;
 }
 </style>
