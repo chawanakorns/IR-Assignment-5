@@ -63,12 +63,12 @@ export default {
       <div class="results-container">
         <!-- BM25 Results -->
         <div class="results-box">
-          <h2 style="text-decoration: underline; padding: 10px;">BM25 Results</h2>
+          <h2 style="text-decoration: underline; padding: 10px; font-weight: bold;">BM25 Results</h2>
           <div class="results-scrollable">
             <div class="result" v-for="result in bm25Results" :key="result.url">
               <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
               <div class="result-url">{{ result.url }}</div>
-              <div class="result-snippet">{{ result.text }}</div>
+              <div class="result-snippet" v-html="result.text"></div>
               <div class="result-score">BM25 Score: {{ result.score }}</div>
             </div>
           </div>
@@ -76,12 +76,12 @@ export default {
 
         <!-- TF-IDF Results -->
         <div class="results-box">
-          <h2 style="text-decoration: underline; padding: 10px;">TF-IDF Results</h2>
+          <h2 style="text-decoration: underline; padding: 10px; font-weight: bold;">TF-IDF Results</h2>
           <div class="results-scrollable">
             <div class="result" v-for="result in tfidfResults" :key="result.url">
               <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
               <div class="result-url">{{ result.url }}</div>
-              <div class="result-snippet">{{ result.text }}</div>
+              <div class="result-snippet" v-html="result.text"></div>
               <div class="result-score">TF-IDF Score: {{ result.score }}</div>
             </div>
           </div>
@@ -146,6 +146,7 @@ export default {
 
 .result-title:hover {
   text-decoration: underline;
+  background-color: lightblue;
 }
 
 .result-url {
@@ -161,12 +162,6 @@ export default {
   color: #4d5156;
   white-space: normal;
   overflow: hidden;
-}
-
-.highlight {
-  background-color: yellow;
-  font-weight: bold;
-  color: #d93025;
 }
 
 .result-score {
