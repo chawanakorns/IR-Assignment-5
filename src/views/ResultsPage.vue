@@ -1,44 +1,46 @@
-<script setup lang="ts">
+<script lang="ts">
 import axios from 'axios'
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
-const route = useRoute()
-const query = ref(route.query.q || '')
-const bm25Results = ref([])
-const tfidfResults = ref([])
-const executionTime = ref(0)
-const loading = ref(false)
-const totalResults = ref(0)
+export default {
+  setup() {
+    const route = useRoute()
+    const query = ref(route.query.q || '')
+    const bm25Results = ref([])
+    const tfidfResults = ref([])
+    const executionTime = ref(0)
+    const loading = ref(false)
+    const totalResults = ref(0)
 
-// Function to fetch results from API
-const fetchResults = async () => {
-  if (!query.value) return
-  loading.value = true
+    const fetchResults = async () => {
+      if (!query.value.trim()) return
+      loading.value = true
+      try {
+        const response = await axios.get(`http://localhost:5000/search?q=${query.value}`)
+        bm25Results.value = response.data.bm25_results
+        tfidfResults.value = response.data.tfidf_results
+        executionTime.value = response.data.execution_time
+        totalResults.value = response.data.total_results
+      } catch (error) {
+        console.error('Error fetching results:', error)
+      }
+      loading.value = false
+    }
 
-  try {
-    const response = await axios.get(`http://localhost:5000/search?q=${query.value}`)
-    bm25Results.value = response.data.bm25_results
-    tfidfResults.value = response.data.tfidf_results
-    executionTime.value = response.data.execution_time
-    totalResults.value = response.data.total_results
-  } catch (error) {
-    console.error('Error fetching results:', error)
+    watch(() => route.query.q, (newQuery) => {
+      query.value = newQuery || ''
+      fetchResults()
+    }, { immediate: true })
+
+    return { query, bm25Results, tfidfResults, executionTime, loading, totalResults }
   }
-
-  loading.value = false
 }
-
-// Watch for changes in the query and refetch results
-watch(() => route.query.q, (newQuery) => {
-  query.value = newQuery || ''
-  fetchResults()
-}, { immediate: true }) // Fetch results when the component loads
 </script>
 
 <template>
-  <div class="results-page">
-    <h1>Results for "{{ query }}"</h1>
+  <div class="results-page" v-if="query">
+    <h1>Results for "<span class="bold-query">{{ query }}</span>"</h1>
     <p v-if="loading">Loading...</p>
     <div v-else>
       <p class="result-count">About {{ totalResults }} results ({{ executionTime }} seconds)</p>
@@ -46,7 +48,7 @@ watch(() => route.query.q, (newQuery) => {
       <div class="results-container">
         <!-- BM25 Results -->
         <div class="results-box">
-          <h2 style="text-decoration: underline">BM25 Results</h2>
+          <h2 style="text-decoration: underline; padding: 10px;">BM25 Results</h2>
           <div class="results-scrollable">
             <div class="result" v-for="result in bm25Results" :key="result.url">
               <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
@@ -59,7 +61,7 @@ watch(() => route.query.q, (newQuery) => {
 
         <!-- TF-IDF Results -->
         <div class="results-box">
-          <h2 style="text-decoration: underline">TF-IDF Results</h2>
+          <h2 style="text-decoration: underline; padding: 10px;">TF-IDF Results</h2>
           <div class="results-scrollable">
             <div class="result" v-for="result in tfidfResults" :key="result.url">
               <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
@@ -80,6 +82,12 @@ watch(() => route.query.q, (newQuery) => {
   font-family: Arial, sans-serif;
 }
 
+.bold-query {
+  font-weight: bold;
+  color: #d93025;
+  /* Google-style red for query */
+}
+
 .result-count {
   font-size: 16px;
   color: #777;
@@ -89,6 +97,7 @@ watch(() => route.query.q, (newQuery) => {
   display: flex;
   justify-content: space-between;
   margin-top: 20px;
+  margin-bottom: 50px;
   width: 100%;
 }
 
@@ -99,20 +108,19 @@ watch(() => route.query.q, (newQuery) => {
   padding: 10px;
   background-color: #fff;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  text-align: left;
 }
 
 .results-scrollable {
   max-height: 400px;
-  /* Fixed height for scrollable area */
   overflow-y: auto;
   padding-right: 10px;
 }
 
 .result {
   border-bottom: 1px solid #ccc;
-  padding-bottom: 10px;
   margin-bottom: 20px;
-  text-align: left;
+  padding: 10px;
 }
 
 .result-title {
@@ -134,18 +142,23 @@ watch(() => route.query.q, (newQuery) => {
 }
 
 .result-snippet {
-  margin-top: 10px;
-  font-size: 12px;
+  margin-top: 12px;
+  font-size: 14px;
   color: #4d5156;
+  white-space: normal;
+  /* Fix text wrapping */
+  overflow: hidden;
 }
 
 .result-snippet b {
   font-weight: bold;
+  color: #d93025;
+  /* Make query terms bold and red */
 }
 
 .result-score {
   margin-top: 5px;
-  font-size: 10px;
+  font-size: 12px;
   color: #888;
 }
 </style>

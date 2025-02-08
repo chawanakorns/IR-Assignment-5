@@ -6,10 +6,8 @@ const query = ref('')
 const router = useRouter()
 const route = useRoute()
 
-// Initialize the query from the URL on page load
 query.value = (route.query.q as string) || ''
 
-// Watch for query changes and update the URL without navigating
 watch(query, (newQuery) => {
   router.replace({ path: '/', query: { q: newQuery || undefined } }) // Removes query if empty
 })
@@ -17,14 +15,21 @@ watch(query, (newQuery) => {
 
 <template>
   <div class="homepage">
+    <div class="title">Split Search Engine</div>
     <div class="search-container">
-      <input v-model="query" class="search-bar" placeholder="Search Google or type a URL" />
+      <input v-model="query" class="search-bar" placeholder="Enter search terms" />
     </div>
     <router-view />
   </div>
 </template>
 
 <style scoped>
+.title {
+  font-size: 48px;
+  font-weight: bold;
+  margin: 30px;
+}
+
 .homepage {
   display: flex;
   flex-direction: column;
