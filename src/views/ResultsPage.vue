@@ -3,18 +3,26 @@ import axios from 'axios'
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
+
 export default {
   setup() {
     const route = useRoute()
     const query = ref(route.query.q || '')
-    const bm25Results = ref([])
-    const tfidfResults = ref([])
+    interface SearchResult {
+      url: string;
+      title: string;
+      text: string;
+      score: number;
+    }
+
+    const bm25Results = ref<SearchResult[]>([])
+    const tfidfResults = ref<SearchResult[]>([])
     const executionTime = ref(0)
     const loading = ref(false)
     const totalResults = ref(0)
 
     const fetchResults = async () => {
-      if (!query.value.trim()) return
+      if (typeof query.value !== 'string' || !query.value.trim()) return
       loading.value = true
       try {
         const response = await axios.get(`http://localhost:5000/search?q=${query.value}`)
@@ -33,7 +41,14 @@ export default {
       fetchResults()
     }, { immediate: true })
 
-    return { query, bm25Results, tfidfResults, executionTime, loading, totalResults }
+    return {
+      query,
+      bm25Results,
+      tfidfResults,
+      executionTime,
+      loading,
+      totalResults
+    }
   }
 }
 </script>
@@ -53,7 +68,7 @@ export default {
             <div class="result" v-for="result in bm25Results" :key="result.url">
               <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
               <div class="result-url">{{ result.url }}</div>
-              <div class="result-snippet" v-html="result.highlighted_text"></div>
+              <div class="result-snippet">{{ result.text }}</div>
               <div class="result-score">BM25 Score: {{ result.score }}</div>
             </div>
           </div>
@@ -66,7 +81,7 @@ export default {
             <div class="result" v-for="result in tfidfResults" :key="result.url">
               <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
               <div class="result-url">{{ result.url }}</div>
-              <div class="result-snippet" v-html="result.highlighted_text"></div>
+              <div class="result-snippet">{{ result.text }}</div>
               <div class="result-score">TF-IDF Score: {{ result.score }}</div>
             </div>
           </div>
@@ -145,11 +160,11 @@ export default {
   font-size: 14px;
   color: #4d5156;
   white-space: normal;
-  /* Fix text wrapping */
   overflow: hidden;
 }
 
-.result-snippet b {
+.highlight {
+  background-color: yellow;
   font-weight: bold;
   color: #d93025;
 }
