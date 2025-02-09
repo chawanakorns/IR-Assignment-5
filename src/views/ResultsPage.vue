@@ -3,16 +3,15 @@ import axios from 'axios'
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
-
 export default {
   setup() {
     const route = useRoute()
     const query = ref(route.query.q || '')
     interface SearchResult {
-      url: string;
-      title: string;
-      text: string;
-      score: number;
+      url: string
+      title: string
+      text: string
+      score: number
     }
 
     const bm25Results = ref<SearchResult[]>([])
@@ -36,10 +35,14 @@ export default {
       loading.value = false
     }
 
-    watch(() => route.query.q, (newQuery) => {
-      query.value = newQuery || ''
-      fetchResults()
-    }, { immediate: true })
+    watch(
+      () => route.query.q,
+      (newQuery) => {
+        query.value = newQuery || ''
+        fetchResults()
+      },
+      { immediate: true },
+    )
 
     return {
       query,
@@ -47,15 +50,18 @@ export default {
       tfidfResults,
       executionTime,
       loading,
-      totalResults
+      totalResults,
     }
-  }
+  },
 }
 </script>
 
 <template>
   <div class="results-page" v-if="query">
-    <h1>Results for "<span class="bold-query">{{ query }}</span>"</h1>
+    <h1>
+      Results for "<span class="bold-query">{{ query }}</span
+      >"
+    </h1>
     <p v-if="loading">Loading...</p>
     <div v-else>
       <p class="result-count">About {{ totalResults }} results ({{ executionTime }} seconds)</p>
@@ -63,7 +69,7 @@ export default {
       <div class="results-container">
         <!-- BM25 Results -->
         <div class="results-box">
-          <h2 style="text-decoration: underline; padding: 10px; font-weight: bold;">BM25 Results</h2>
+          <h2 style="text-decoration: underline; padding: 10px; font-weight: bold">BM25 Results</h2>
           <div class="results-scrollable">
             <div class="result" v-for="result in bm25Results" :key="result.url">
               <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
@@ -76,7 +82,9 @@ export default {
 
         <!-- TF-IDF Results -->
         <div class="results-box">
-          <h2 style="text-decoration: underline; padding: 10px; font-weight: bold;">TF-IDF Results</h2>
+          <h2 style="text-decoration: underline; padding: 10px; font-weight: bold">
+            TF-IDF Results
+          </h2>
           <div class="results-scrollable">
             <div class="result" v-for="result in tfidfResults" :key="result.url">
               <a :href="result.url" target="_blank" class="result-title">{{ result.title }}</a>
